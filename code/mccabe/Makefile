@@ -35,3 +35,6 @@ clean:
 
 mccabe: $(TARGET).cpp
 	$(CXX) $(HEADERS) $(LDFLAGS) $(CXXFLAGS) $(TARGET).cpp $(LIBS) -o $(TARGET)
+
+dump:
+	clang -Xclang -ast-dump $(file)

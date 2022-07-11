@@ -15,7 +15,7 @@ class world {
   }
 };
 
-void func1(hello h1, hello h2, world w1, world w2, int s)  {
+void func1(hello h1, hello h2, world w1, world w2, int& s, int * a)  {
 	h1.num = 1;
     h1.num++;
     s = (char) h2.num;

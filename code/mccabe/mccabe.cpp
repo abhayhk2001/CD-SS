@@ -178,11 +178,14 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
     auto type = clang::QualType::getAsString(Parameter->getType().split());
     auto* Function = clang::cast<clang::FunctionDecl>(
         Parameter->getParentFunctionOrMethod());
+    
+    llvm::outs() << type <<"\n";
+    // const clang::ASTRecordLayout &typeLayout(Parameter->getASTContext().getASTRecordLayout(Parameter));
+    // llvm::outs() << "record '" << Parameter->getQualifiedNameAsString() << "' with " <<  typeLayout.getSize().getQuantity() << "bytes\n";
 
     bool param_value_changed = false;
 
     // llvm::outs() <<"Finding if param is changed : " <<
-    // Parameter->getQualifiedNameAsString() << "\n";
 
     if (LHSVariableFinder::find((clang::FunctionDecl*)Function,
                                 Parameter->getQualifiedNameAsString())) {
@@ -190,7 +193,7 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
       param_value_changed = true;
     }
 
-    if (type.empty() || type.back() == '&' || param_value_changed) return;
+    if (type.empty() || type.back() == '&' || type.back() == '*' || param_value_changed) return;
     auto& Diagnostics = Result.Context->getDiagnostics();
     const auto ID =
         Diagnostics.getCustomDiagID(clang::DiagnosticsEngine::Warning,
