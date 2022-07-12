@@ -11,9 +11,7 @@
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
-
-#include "clang/AST/RecursiveASTVisitor.h"
-
+#include <clang/AST/RecursiveASTVisitor.h>
 
 // LLVM includes
 #include <llvm/ADT/StringRef.h>
@@ -79,7 +77,6 @@ class LHSVariableFinder final
     return true;
   }
 
-
   bool VisitUnaryOperator(clang::UnaryOperator* SymbolUse) {
     if (auto* LHSexpr = SymbolUse->getSubExpr()) {
       std::string usedVar;
@@ -132,7 +129,6 @@ class LHSVariableFinder final
     return true;
   }
 
-
   bool VisitExprWithCleanups(clang::ExprWithCleanups* SymbolUse) {
     if (auto* LHSexpr = SymbolUse->getSubExpr()) {
       std::string usedVar;
@@ -148,7 +144,7 @@ class LHSVariableFinder final
       } else {
       }
 
-      // llvm::outs() << "usedVar " << usedVar << " var "<< var <<"\n";
+      llvm::outs() << "usedVar " << usedVar << " var "<< var <<"\n";
 
       if (usedVar == var) {
         Found = true;

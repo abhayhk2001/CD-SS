@@ -38,3 +38,6 @@ mccabe: $(TARGET).cpp
 
 dump:
 	clang -Xclang -ast-dump $(file)
+
+ws:
+	$(CXX) $(HEADERS) $(LDFLAGS) $(CXXFLAGS) mccabe_ws.cpp $(LIBS) -o mccabe_ws
