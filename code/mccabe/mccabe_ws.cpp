@@ -179,30 +179,28 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
     auto* Function = clang::cast<clang::FunctionDecl>(
         Parameter->getParentFunctionOrMethod());
 
-    llvm::outs() << type << "\n";
-
+    auto& Diagnostics = Result.Context->getDiagnostics();
     if (type.find("class") != std::string::npos ||
         type.find("struct") != std::string::npos ||
         type.find("union") != std::string::npos) {
-      auto& Diagnostics1 = Result.Context->getDiagnostics();
-      const auto ID1 =
-          Diagnostics1.getCustomDiagID(clang::DiagnosticsEngine::Note,
-                                       "Parameter '%0' of function '%1' can be "
-                                       "declared as reference");
-      auto Builder = Diagnostics1.Report(Parameter->getLocation(), ID1);
-      Builder.AddString(Parameter->getQualifiedNameAsString());
-      Builder.AddString(Function->getQualifiedNameAsString());
+      clang::VarDecl* VD_ws = (clang::VarDecl*)Parameter;
+      auto FieldInfo = VD_ws->getASTContext().getTypeInfo(VD_ws->getType());
+      auto TypeSize = FieldInfo.Width;
+      llvm::outs() << TypeSize << " " << Threshold << "\n";
+      if ((TypeSize / 8) > Threshold) {
+        const auto ID1 = Diagnostics.getCustomDiagID(
+            clang::DiagnosticsEngine::Warning,
+            "Parameter '%0' of function '%1' can be "
+            "declared as 'const %2& %0' due to its large size");
+
+        auto Builder1 = Diagnostics.Report(Parameter->getLocation(), ID1);
+        Builder1.AddString(Parameter->getQualifiedNameAsString());
+        Builder1.AddString(Function->getQualifiedNameAsString());
+        Builder1.AddString(type);
+      }
     }
 
-
-    const clang::ASTRecordLayout& typeLayout(
-        Parameter->getASTContext().getASTRecordLayout(Parameter));
-    llvm::outs() << "record '" << Parameter->getQualifiedNameAsString()
-                 << "'
-        with " <<  typeLayout.getSize().getQuantity() << " bytes\n ";
-
-        bool param_value_changed = false;
-
+    bool param_value_changed = false;
     // llvm::outs() <<"Finding if param is changed : " <<
 
     if (LHSVariableFinder::find((clang::FunctionDecl*)Function,
@@ -214,15 +212,15 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
     if (type.empty() || type.back() == '&' || type.back() == '*' ||
         param_value_changed)
       return;
-    auto& Diagnostics = Result.Context->getDiagnostics();
     const auto ID =
         Diagnostics.getCustomDiagID(clang::DiagnosticsEngine::Warning,
                                     "Parameter '%0' of function '%1' can be "
-                                    "declared as reference");
+                                    "declared as 'const %2& %0'");
 
     auto Builder = Diagnostics.Report(Parameter->getLocation(), ID);
     Builder.AddString(Parameter->getQualifiedNameAsString());
     Builder.AddString(Function->getQualifiedNameAsString());
+    Builder.AddString(type);
   }
 
  private:
@@ -290,7 +288,7 @@ llvm::cl::extrahelp McCabeCategoryHelp(R"(
 
 llvm::cl::opt<unsigned>
     ThresholdOption("threshold",
-                    llvm::cl::init(2),
+                    llvm::cl::init(100),
                     llvm::cl::desc("The threshold for emitting warnings"),
                     llvm::cl::cat(McCabeCategory));
 llvm::cl::alias ShortThresholdOption("t",

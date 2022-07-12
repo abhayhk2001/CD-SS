@@ -2,6 +2,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Expr.h>
+#include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/Analysis/CFG.h>
@@ -11,7 +12,6 @@
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
-#include <clang/AST/RecursiveASTVisitor.h>
 
 // LLVM includes
 #include <llvm/ADT/StringRef.h>
@@ -144,7 +144,7 @@ class LHSVariableFinder final
       } else {
       }
 
-      llvm::outs() << "usedVar " << usedVar << " var "<< var <<"\n";
+      // llvm::outs() << "usedVar " << usedVar << " var " << var << "\n";
 
       if (usedVar == var) {
         Found = true;
@@ -174,10 +174,6 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
     auto type = clang::QualType::getAsString(Parameter->getType().split());
     auto* Function = clang::cast<clang::FunctionDecl>(
         Parameter->getParentFunctionOrMethod());
-    
-    llvm::outs() << type <<"\n";
-    // const clang::ASTRecordLayout &typeLayout(Parameter->getASTContext().getASTRecordLayout(Parameter));
-    // llvm::outs() << "record '" << Parameter->getQualifiedNameAsString() << "' with " <<  typeLayout.getSize().getQuantity() << "bytes\n";
 
     bool param_value_changed = false;
 
@@ -189,16 +185,19 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
       param_value_changed = true;
     }
 
-    if (type.empty() || type.back() == '&' || type.back() == '*' || param_value_changed) return;
+    if (type.empty() || type.back() == '&' || type.back() == '*' ||
+        param_value_changed)
+      return;
     auto& Diagnostics = Result.Context->getDiagnostics();
     const auto ID =
         Diagnostics.getCustomDiagID(clang::DiagnosticsEngine::Warning,
                                     "Parameter '%0' of function '%1' can be "
-                                    "declared as reference");
+                                    "declared as 'const %2& %0'");
 
     auto Builder = Diagnostics.Report(Parameter->getLocation(), ID);
     Builder.AddString(Parameter->getQualifiedNameAsString());
     Builder.AddString(Function->getQualifiedNameAsString());
+    Builder.AddString(type);
   }
 
  private:
