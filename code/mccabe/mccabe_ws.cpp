@@ -195,12 +195,13 @@ class MatchHandler : public clang::ast_matchers::MatchFinder::MatchCallback {
     }
 
 
-    // const clang::ASTRecordLayout
-    // &typeLayout(Parameter->getASTContext().getASTRecordLayout(Parameter));
-    // llvm::outs() << "record '" << Parameter->getQualifiedNameAsString() << "'
-    // with " <<  typeLayout.getSize().getQuantity() << "bytes\n";
+    const clang::ASTRecordLayout& typeLayout(
+        Parameter->getASTContext().getASTRecordLayout(Parameter));
+    llvm::outs() << "record '" << Parameter->getQualifiedNameAsString()
+                 << "'
+        with " <<  typeLayout.getSize().getQuantity() << " bytes\n ";
 
-    bool param_value_changed = false;
+        bool param_value_changed = false;
 
     // llvm::outs() <<"Finding if param is changed : " <<
 
